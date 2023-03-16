@@ -1,6 +1,7 @@
 import random
-from typing import List, Tuple
+from collections import deque
 from room import Room
+from typing import List, Tuple
 
 UP = 0
 RIGHT = 1
@@ -22,6 +23,85 @@ class Map:
         self.matrix = [[Room() for _ in range(9)] for _ in range(9)]
         self.main_loop = False
         self.create_main_branch(x=4, y=4, depth=0, loop=False)
+        self.create_split_branches()
+
+    def create_split_branches(self) -> bool:
+        candidates = deque()
+        for y in range(9):
+            for x in range(9):
+                room = self.matrix[y][x]
+                if not (room.empty or room.defender or room.colossus):
+                    candidates.append((x, y))
+        random.shuffle(candidates)
+
+        # Place Troom
+        rooms_tried = 0
+        while rooms_tried < len(candidates):
+            x, y = candidates.popleft()
+            rooms_tried += 1
+            split_length = random.randint(1, 3)
+            if self.toggle_troom_branch(x, y, depth=0, length=split_length):
+                break
+            else:
+                candidates.append((x, y))
+        if rooms_tried == len(candidates):
+            return False
+
+        # Place pots
+        pots_placed = 0
+        while candidates and pots_placed < 5:
+            x, y = candidates.popleft()
+            split_length = random.randint(2, 4)
+            if self.toggle_pot_branch(x, y, depth=0, length=split_length):
+                pots_placed += 1
+            else:
+                self.toggle_pot_branch(x, y, depth=0, length=split_length)
+        return pots_placed == 5
+
+    def toggle_troom_branch(self, x: int, y: int, depth: int, length: int) -> bool:
+        if depth == length:
+            if y - 1 >= 0 and self.matrix[y - 1][x].empty:
+                self.matrix[y][x].toggle_edge(direction=UP)
+                self.matrix[y - 1][x].toggle_edge(direction=DOWN)
+                self.matrix[y - 1][x].toggle_troom()
+                return True
+            else:
+                return False
+
+        choices = [(x, y - 1, UP, 0), (x + 1, y, RIGHT, 1), (x, y + 1, DOWN, 2), (x - 1, y, LEFT, 3)]
+        weights = self.weight_adjacent_rooms(x, y)
+        while any(weights):
+            adj_x, adj_y, direction, index = random.choices(choices, weights)[0]
+            self.matrix[y][x].toggle_edge(direction)
+            adj_direction = self.opposite_direction(direction)
+            self.matrix[adj_y][adj_x].toggle_edge(adj_direction)
+            if self.toggle_troom_branch(adj_x, adj_y, depth + 1, length):
+                return True
+            else:
+                weights[index] = 0
+                self.matrix[y][x].toggle_edge(direction)
+                self.matrix[adj_y][adj_x].toggle_edge(adj_direction)
+        return False
+
+    def toggle_pot_branch(self, x: int, y: int, depth: int, length: int) -> bool:
+        if depth == length:
+            self.matrix[y][x].toggle_pot()
+            return True
+
+        choices = [(x, y - 1, UP, 0), (x + 1, y, RIGHT, 1), (x, y + 1, DOWN, 2), (x - 1, y, LEFT, 3)]
+        weights = self.weight_adjacent_rooms(x, y)
+        while any(weights):
+            adj_x, adj_y, direction, index = random.choices(choices, weights)[0]
+            self.matrix[y][x].toggle_edge(direction)
+            adj_direction = self.opposite_direction(direction)
+            self.matrix[adj_y][adj_x].toggle_edge(adj_direction)
+            if self.toggle_pot_branch(adj_x, adj_y, depth + 1, length):
+                return True
+            else:
+                weights[index] = 0
+                self.matrix[y][x].toggle_edge(direction)
+                self.matrix[adj_y][adj_x].toggle_edge(adj_direction)
+        return False
 
     @staticmethod
     def opposite_direction(direction: int) -> int:
