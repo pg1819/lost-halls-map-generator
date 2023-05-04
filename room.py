@@ -43,7 +43,7 @@ class Room:
             self.down = not self.down
         else:
             self.left = not self.left
-        self.empty = not (self.left or self.right or self.down or self.right or
+        self.empty = not (self.left or self.right or self.down or self.up or
                           self.troom or self.pot or self.defender or self.colossus)
 
     def toggle_defender(self):
@@ -52,7 +52,7 @@ class Room:
         :return: Nothing
         """
         self.defender = not self.defender
-        self.empty = not (self.left or self.right or self.down or self.right or
+        self.empty = not (self.left or self.right or self.down or self.up or
                           self.troom or self.pot or self.defender or self.colossus)
 
     def toggle_colossus(self):
@@ -61,7 +61,7 @@ class Room:
         :return: Nothing
         """
         self.colossus = not self.colossus
-        self.empty = not (self.left or self.right or self.down or self.right or
+        self.empty = not (self.left or self.right or self.down or self.up or
                           self.troom or self.pot or self.defender or self.colossus)
 
     def toggle_troom(self):
@@ -70,7 +70,7 @@ class Room:
         :return: Nothing
         """
         self.troom = not self.troom
-        self.empty = not (self.left or self.right or self.down or self.right or
+        self.empty = not (self.left or self.right or self.down or self.up or
                           self.troom or self.pot or self.defender or self.colossus)
 
     def toggle_pot(self):
@@ -79,5 +79,5 @@ class Room:
         :return: Nothing
         """
         self.pot = not self.pot
-        self.empty = not (self.left or self.right or self.down or self.right or
+        self.empty = not (self.left or self.right or self.down or self.up or
                           self.troom or self.pot or self.defender or self.colossus)
